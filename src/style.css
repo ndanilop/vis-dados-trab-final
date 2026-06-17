@@ -1,0 +1,42 @@
+:root {
+    --bg-color: #f9f9f9;
+    --text-color: #333;
+    --dot-color-early: #2ca02c;
+    --dot-color-late: #1f77b4;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+#app {
+    max-width: 900px;
+    width: 100%;
+}
+
+.axis-label {
+    font-size: 12px;
+    font-weight: bold;
+}
+
+#tooltip {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 4px;
+    pointer-events: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    font-size: 12px;
+    transition: opacity 0.2s;
+}
+
+#tooltip.hidden {
+    opacity: 0;
+}
