@@ -1,8 +1,9 @@
 :root {
-    --bg-color: #f9f9f9;
-    --text-color: #333;
-    --dot-color-early: #2ca02c;
-    --dot-color-late: #1f77b4;
+    --bg-color: #f4f7f6;
+    --panel-bg: #ffffff;
+    --text-color: #2c3e50;
+    --text-muted: #7f8c8d;
+    --border-color: #ecf0f1;
 }
 
 body {
@@ -16,27 +17,84 @@ body {
 }
 
 #app {
-    max-width: 900px;
+    /* Largura aumentada para acomodar a visualização sênior */
+    max-width: 1250px; 
     width: 100%;
 }
 
+header {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+}
+
+header p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+/* --- Layout do Dashboard --- */
+.dashboard {
+    display: grid;
+    /* A coluna da esquerda fica com 400px fixos, a da direita ocupa o resto */
+    grid-template-columns: 400px 1fr; 
+    gap: 20px;
+    align-items: start;
+}
+
+.panel {
+    background-color: var(--panel-bg);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-color);
+}
+
+.panel h2 {
+    font-size: 16px;
+    margin-top: 0;
+    margin-bottom: 5px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    color: #34495e;
+}
+
+.hint {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 15px;
+    margin-top: 0;
+}
+
+/* --- Estilos do D3.js (SVG) --- */
 .axis-label {
     font-size: 12px;
     font-weight: bold;
+    fill: #34495e;
 }
 
-#tooltip {
-    position: absolute;
-    background-color: white;
-    border: 1px solid #ddd;
-    padding: 10px;
-    border-radius: 4px;
-    pointer-events: none;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    font-size: 12px;
-    transition: opacity 0.2s;
+.bar {
+    transition: opacity 0.3s ease, filter 0.2s ease;
 }
 
-#tooltip.hidden {
-    opacity: 0;
+.bar:hover {
+    filter: brightness(0.85); /* Feedback visual sutil ao passar o mouse */
+}
+
+/* --- Responsividade --- */
+@media (max-width: 1024px) {
+    .dashboard {
+        grid-template-columns: 1fr; /* Empilha os gráficos em telas menores */
+    }
+    
+    #bar-chart svg, #trend-chart svg {
+        width: 100%;
+        height: auto;
+    }
 }

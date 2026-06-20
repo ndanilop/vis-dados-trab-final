@@ -3,18 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Health & Lifestyle Viz - Trabalho 02</title>
+    <title>Causalidade do Sono - Health & Lifestyle Viz</title>
     <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
     <div id="app">
         <header>
-            <h1>Análise de Sono e Energia</h1>
-            <p>Selecione e explore a correlação entre a duração do sono e os níveis de energia relatados.</p>
+            <h1>O Gradiente do Sono e a Ilusão da Causalidade</h1>
+            <p>Explore o impacto do horário de acordar em métricas de saúde e performance.<br>
+            <strong>Selecione uma métrica no gráfico de barras</strong> para investigar a sua tendência e incerteza estatística.</p>
         </header>
-        
-        <main id="viz-container"></main>
-        <div id="tooltip" class="hidden"></div>
+
+        <main class="dashboard">
+            <!-- Visão 1: Bar Chart Divergente (Overview/Filtro) -->
+            <section class="panel bar-panel">
+                <h2>Vantagem: Cedo vs. Tarde</h2>
+                <p class="hint">Clique em uma barra para detalhar a tendência</p>
+                <div id="bar-chart"></div>
+            </section>
+
+            <!-- Visão 2: Trend Chart com Incerteza (Exploração) -->
+            <section class="panel trend-panel">
+                <h2>Tendência Contínua e Variância</h2>
+                <p class="hint">Média (linha) e desvio padrão (área) ao longo do horário</p>
+                <div id="trend-chart"></div>
+            </section>
+        </main>
     </div>
 
     <script type="module" src="/src/main.js"></script>
