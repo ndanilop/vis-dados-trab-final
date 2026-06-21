@@ -1,36 +1,88 @@
-<!DOCTYPE html>
-<html lang="pt-PT">
+<!doctype html>
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Causalidade do Sono - Health & Lifestyle Viz</title>
-    <link rel="stylesheet" href="/src/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Exploração interativa de sono, saúde e rotina matinal.">
+  <title>Atlas do Despertar</title>
+  <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
-    <div id="app">
-        <header>
-            <h1>O Gradiente do Sono e a Ilusão da Causalidade</h1>
-            <p>Explore o impacto do horário de acordar em métricas de saúde e performance.<br>
-            <strong>Selecione uma métrica no gráfico de barras</strong> para investigar a sua tendência e incerteza estatística.</p>
-        </header>
+  <div id="app">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">SONO, ROTINA E BEM-ESTAR</p>
+        <h1>Atlas do Despertar</h1>
+        <p class="hero-copy">Explore associações entre o horário de acordar e indicadores de saúde. Os dados são observacionais: diferenças não demonstram causalidade.</p>
+      </div>
+      <div class="hero-mark" aria-hidden="true"><span>04</span><i></i><span>11</span></div>
+    </header>
 
-        <main class="dashboard">
-            <!-- Visão 1: Bar Chart Divergente (Overview/Filtro) -->
-            <section class="panel bar-panel">
-                <h2>Vantagem: Cedo vs. Tarde</h2>
-                <p class="hint">Clique em uma barra para detalhar a tendência</p>
-                <div id="bar-chart"></div>
-            </section>
+    <section class="control-bar" aria-label="Filtros globais">
+      <div class="control-copy">
+        <span class="control-label">População analisada</span>
+        <strong id="sample-count">Carregando dados...</strong>
+      </div>
+      <div class="filter-group" role="group" aria-label="Grupo de despertar">
+        <button class="filter-chip active" data-group="Todos">Todos</button>
+        <button class="filter-chip" data-group="Yes"><span class="dot dot-early"></span>Acorda cedo</button>
+        <button class="filter-chip" data-group="No"><span class="dot dot-late"></span>Acorda tarde</button>
+      </div>
+      <button id="clear-country" class="country-filter" disabled>Todos os países</button>
+    </section>
 
-            <!-- Visão 2: Trend Chart com Incerteza (Exploração) -->
-            <section class="panel trend-panel">
-                <h2>Tendência Contínua e Variância</h2>
-                <p class="hint">Média (linha) e desvio padrão (área) ao longo do horário</p>
-                <div id="trend-chart"></div>
-            </section>
-        </main>
-    </div>
+    <main class="dashboard">
+      <section class="panel metric-panel">
+        <div class="panel-heading">
+          <div><span class="step">VISÃO GERAL</span><h2>Onde estão as diferenças?</h2></div>
+        </div>
+        <p class="hint">Diferença padronizada entre os grupos, medida em desvios-padrão. Selecione uma métrica.</p>
+        <div id="bar-chart" class="chart"></div>
+      </section>
 
-    <script type="module" src="/src/main.js"></script>
+      <section class="panel trend-panel">
+        <div class="panel-heading">
+          <div><span class="step">AO LONGO DA MANHÃ</span><h2 id="trend-title">Indicador ao longo da manhã</h2></div>
+          <div class="legend"><span><i class="swatch line"></i>Média</span><span><i class="swatch band"></i>IC 95%</span></div>
+        </div>
+        <p class="hint">Médias em intervalos de 30 minutos; a faixa representa o intervalo de confiança da média.</p>
+        <div id="trend-chart" class="chart"></div>
+      </section>
+
+      <section class="panel country-panel">
+        <div class="panel-heading">
+          <div><span class="step">COMPARAÇÃO ENTRE PAÍSES</span><h2>Como os países se comparam?</h2></div>
+        </div>
+        <p class="hint">Ranking da média selecionada. Clique em um país para filtrar as visões de detalhe.</p>
+        <div id="country-chart" class="chart"></div>
+      </section>
+
+      <section class="panel heatmap-panel">
+        <div class="panel-heading">
+          <div><span class="step">ROTINAS DE SONO</span><h2>Em que rotinas o indicador muda?</h2></div>
+        </div>
+        <p class="hint">Média por combinação de horário de acordar e duração do sono; células vazias têm poucos casos.</p>
+        <div id="heatmap-chart" class="chart"></div>
+      </section>
+
+      <section class="panel scatter-panel">
+        <div class="panel-heading">
+          <div><span class="step">PERFIS INDIVIDUAIS</span><h2>Sono de qualidade acompanha o indicador?</h2></div>
+          <div class="legend"><span><i class="swatch early"></i>Cedo</span><span><i class="swatch late"></i>Tarde</span></div>
+        </div>
+        <p class="hint">Cada ponto é uma pessoa. Passe o cursor para inspecionar perfil, sono e valor.</p>
+        <div id="scatter-chart" class="chart"></div>
+      </section>
+    </main>
+
+    <footer class="method-note">
+      <strong>Como interpretar</strong>
+      <p>A análise descreve associações em uma amostra de 10 mil pessoas. As comparações não controlam idade, ocupação ou outros fatores e, portanto, não permitem afirmar que acordar cedo causa mudanças na saúde. Células e intervalos com poucas observações são ocultados para reduzir ruído.</p>
+    </footer>
+  </div>
+
+  <div id="tooltip" class="tooltip" role="status" aria-live="polite"></div>
+  <div id="loading" class="loading"><span></span>Preparando a exploração...</div>
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>
