@@ -134,14 +134,15 @@ async function renderMetricBars() {
     ) AS stats
   `).join(' UNION ALL ');
   const data = rows(await connection.query(query)).sort((a, b) => b.difference - a.difference);
-  const margin = { top: 30, right: 28, bottom: 32, left: 96 };
-  const { g, innerWidth, innerHeight } = svgFrame('#bar-chart', 320, margin);
+  const margin = { top: 30, right: 28, bottom: 52, left: 96 };
+  const { g, innerWidth, innerHeight } = svgFrame('#bar-chart', 340, margin);
   const extent = d3.max(data, d => Math.abs(d.difference)) || 1;
   const x = d3.scaleLinear().domain([-extent, extent]).nice().range([0, innerWidth]);
   const y = d3.scaleBand().domain(data.map(d => metrics[d.metric].short)).range([0, innerHeight]).padding(.38);
 
   g.append('g').attr('class', 'axis grid').attr('transform', `translate(0,${innerHeight})`).call(d3.axisBottom(x).ticks(5).tickSize(-innerHeight).tickFormat(d3.format('+.1f')));
   g.append('g').attr('class', 'axis').call(d3.axisLeft(y).tickSize(0)).call(group => group.select('.domain').remove());
+  g.append('text').attr('class', 'axis-label').attr('x', innerWidth / 2).attr('y', innerHeight + 43).attr('text-anchor', 'middle').text('Efeito padronizado (desvios-padrão)');
   g.append('line').attr('x1', x(0)).attr('x2', x(0)).attr('y2', innerHeight).attr('stroke', COLORS.ink).attr('stroke-width', 1.2);
 
   g.selectAll('.bar').data(data).join('rect')
@@ -162,13 +163,15 @@ async function renderTrend() {
     GROUP BY 1 HAVING COUNT(*) >= 12 ORDER BY 1
   `));
   d3.select('#trend-title').text(`${metrics[state.metric].label} ao longo da manhã`);
-  const margin = { top: 18, right: 24, bottom: 45, left: 54 };
+  const margin = { top: 18, right: 24, bottom: 52, left: 64 };
   const { g, innerWidth, innerHeight } = svgFrame('#trend-chart', 350, margin);
   if (!data.length) return g.append('text').attr('class', 'empty-state').text('Sem dados suficientes para esta seleção.');
   const x = d3.scaleLinear().domain([4, 11]).range([0, innerWidth]);
   const y = d3.scaleLinear().domain(d3.extent(data.flatMap(d => [d.average - d.ci, d.average + d.ci]))).nice().range([innerHeight, 0]);
   g.append('g').attr('class', 'axis grid').call(d3.axisLeft(y).ticks(5).tickSize(-innerWidth));
   g.append('g').attr('class', 'axis').attr('transform', `translate(0,${innerHeight})`).call(d3.axisBottom(x).ticks(7).tickFormat(d => `${d}h`));
+  g.append('text').attr('class', 'axis-label').attr('x', innerWidth / 2).attr('y', innerHeight + 43).attr('text-anchor', 'middle').text('Horário de acordar');
+  g.append('text').attr('class', 'axis-label').attr('transform', 'rotate(-90)').attr('x', -innerHeight / 2).attr('y', -48).attr('text-anchor', 'middle').text(metrics[state.metric].label);
   const curve = d3.curveMonotoneX;
   g.append('path').datum(data).attr('fill', '#bfe3d4').attr('d', d3.area().x(d => x(d.hour_bin)).y0(d => y(d.average - d.ci)).y1(d => y(d.average + d.ci)).curve(curve));
   g.append('path').datum(data).attr('fill', 'none').attr('stroke', COLORS.early).attr('stroke-width', 3).attr('d', d3.line().x(d => x(d.hour_bin)).y(d => y(d.average)).curve(curve));
@@ -182,13 +185,15 @@ async function renderCountries() {
     FROM health_data WHERE ${state.metric} IS NOT NULL ${state.group !== 'Todos' ? `AND Early_Waker = '${state.group}'` : ''}
     GROUP BY 1 HAVING COUNT(*) >= 20 ORDER BY average DESC
   `));
-  const margin = { top: 10, right: 52, bottom: 32, left: 82 };
+  const margin = { top: 10, right: 58, bottom: 52, left: 92 };
   const height = Math.max(330, data.length * 27 + margin.top + margin.bottom);
   const { g, innerWidth, innerHeight } = svgFrame('#country-chart', height, margin);
   const x = d3.scaleLinear().domain(d3.extent(data, d => d.average)).nice().range([0, innerWidth]);
   const y = d3.scaleBand().domain(data.map(d => d.country)).range([0, innerHeight]).padding(.34);
   g.append('g').attr('class', 'axis grid').attr('transform', `translate(0,${innerHeight})`).call(d3.axisBottom(x).ticks(5).tickSize(-innerHeight));
   g.append('g').attr('class', 'axis').call(d3.axisLeft(y).tickSize(0)).call(group => group.select('.domain').remove());
+  g.append('text').attr('class', 'axis-label').attr('x', innerWidth / 2).attr('y', innerHeight + 43).attr('text-anchor', 'middle').text(`${metrics[state.metric].label} (média)`);
+  g.append('text').attr('class', 'axis-label').attr('transform', 'rotate(-90)').attr('x', -innerHeight / 2).attr('y', -76).attr('text-anchor', 'middle').text('País');
   const groups = g.selectAll('.country-row').data(data).join('g').attr('class', 'country-row').style('cursor', 'pointer')
     .attr('opacity', d => !state.country || state.country === d.country ? 1 : .28)
     .on('mousemove', (event, d) => showTooltip(event, `<strong>${d.country}</strong>${metrics[state.metric].label}: ${fmt(d.average, 2)}<br>${d.n} pessoas`))
@@ -205,7 +210,7 @@ async function renderHeatmap() {
     FROM health_data WHERE Wake_Hour BETWEEN 4 AND 11 AND Sleep_Duration_Hours BETWEEN 3 AND 10 ${filterSql()}
     GROUP BY 1, 2 HAVING COUNT(*) >= 8 ORDER BY 1, 2
   `));
-  const margin = { top: 18, right: 20, bottom: 48, left: 48 };
+  const margin = { top: 18, right: 20, bottom: 55, left: 66 };
   const { svg, g, innerWidth, innerHeight } = svgFrame('#heatmap-chart', 350, margin);
   if (!data.length) return g.append('text').attr('class', 'empty-state').text('Sem dados suficientes para esta seleção.');
   const wakeBins = d3.range(4, 11, .5);
@@ -216,6 +221,8 @@ async function renderHeatmap() {
   const color = d3.scaleSequential(d3.interpolateYlGnBu).domain(domain);
   g.append('g').attr('class', 'axis').attr('transform', `translate(0,${innerHeight})`).call(d3.axisBottom(x).tickValues(wakeBins.filter((_, i) => i % 2 === 0)).tickFormat(d => `${d}h`));
   g.append('g').attr('class', 'axis').call(d3.axisLeft(y).tickFormat(d => `${d}–${d + 1}h`));
+  g.append('text').attr('class', 'axis-label').attr('x', innerWidth / 2).attr('y', innerHeight + 46).attr('text-anchor', 'middle').text('Horário de acordar');
+  g.append('text').attr('class', 'axis-label').attr('transform', 'rotate(-90)').attr('x', -innerHeight / 2).attr('y', -53).attr('text-anchor', 'middle').text('Duração do sono');
   g.selectAll('.cell').data(data).join('rect').attr('class', 'cell').attr('x', d => x(d.wake_bin)).attr('y', d => y(d.sleep_bin)).attr('width', x.bandwidth()).attr('height', y.bandwidth()).attr('rx', 2).attr('fill', d => color(d.average))
     .on('mousemove', (event, d) => showTooltip(event, `<strong>Acorda ${d.wake_bin.toFixed(1)}h · dorme ${d.sleep_bin}–${d.sleep_bin + 1}h</strong>${metrics[state.metric].label}: ${fmt(d.average, 2)}<br>${d.n} pessoas`)).on('mouseleave', hideTooltip);
   const legendWidth = Math.min(130, innerWidth * .35);
