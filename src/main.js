@@ -166,12 +166,32 @@ async function renderTrend() {
   const margin = { top: 18, right: 24, bottom: 52, left: 64 };
   const { g, innerWidth, innerHeight } = svgFrame('#trend-chart', 350, margin);
   if (!data.length) return g.append('text').attr('class', 'empty-state').text('Sem dados suficientes para esta seleção.');
+  
   const x = d3.scaleLinear().domain([4, 11]).range([0, innerWidth]);
   const y = d3.scaleLinear().domain(d3.extent(data.flatMap(d => [d.average - d.ci, d.average + d.ci]))).nice().range([innerHeight, 0]);
+  
   g.append('g').attr('class', 'axis grid').call(d3.axisLeft(y).ticks(5).tickSize(-innerWidth));
   g.append('g').attr('class', 'axis').attr('transform', `translate(0,${innerHeight})`).call(d3.axisBottom(x).ticks(7).tickFormat(d => `${d}h`));
   g.append('text').attr('class', 'axis-label').attr('x', innerWidth / 2).attr('y', innerHeight + 43).attr('text-anchor', 'middle').text('Horário de acordar');
   g.append('text').attr('class', 'axis-label').attr('transform', 'rotate(-90)').attr('x', -innerHeight / 2).attr('y', -48).attr('text-anchor', 'middle').text(metrics[state.metric].label);
+  
+  // --- LINHA DE THRESHOLD (06:30 = 6.5) ---
+  g.append('line')
+    .attr('x1', x(6.5)).attr('x2', x(6.5))
+    .attr('y1', 0).attr('y2', innerHeight)
+    .attr('stroke', COLORS.ink)
+    .attr('stroke-width', 1.5)
+    .attr('stroke-dasharray', '5,4')
+    .attr('opacity', 0.7);
+    
+  g.append('text')
+    .attr('x', x(6.5) + 6)
+    .attr('y', 12)
+    .attr('fill', COLORS.ink)
+    .attr('font-size', 10)
+    .attr('font-weight', 'bold')
+    .text('06:30 (Threshold)');
+
   const curve = d3.curveMonotoneX;
   g.append('path').datum(data).attr('fill', '#bfe3d4').attr('d', d3.area().x(d => x(d.hour_bin)).y0(d => y(d.average - d.ci)).y1(d => y(d.average + d.ci)).curve(curve));
   g.append('path').datum(data).attr('fill', 'none').attr('stroke', COLORS.early).attr('stroke-width', 3).attr('d', d3.line().x(d => x(d.hour_bin)).y(d => y(d.average)).curve(curve));
@@ -213,18 +233,36 @@ async function renderHeatmap() {
   const margin = { top: 18, right: 20, bottom: 55, left: 66 };
   const { svg, g, innerWidth, innerHeight } = svgFrame('#heatmap-chart', 350, margin);
   if (!data.length) return g.append('text').attr('class', 'empty-state').text('Sem dados suficientes para esta seleção.');
+  
   const wakeBins = d3.range(4, 11, .5);
   const sleepBins = d3.range(3, 10);
   const x = d3.scaleBand().domain(wakeBins).range([0, innerWidth]).padding(.07);
   const y = d3.scaleBand().domain(sleepBins).range([innerHeight, 0]).padding(.07);
   const domain = d3.extent(data, d => d.average);
   const color = d3.scaleSequential(d3.interpolateYlGnBu).domain(domain);
+  
   g.append('g').attr('class', 'axis').attr('transform', `translate(0,${innerHeight})`).call(d3.axisBottom(x).tickValues(wakeBins.filter((_, i) => i % 2 === 0)).tickFormat(d => `${d}h`));
   g.append('g').attr('class', 'axis').call(d3.axisLeft(y).tickFormat(d => `${d}–${d + 1}h`));
   g.append('text').attr('class', 'axis-label').attr('x', innerWidth / 2).attr('y', innerHeight + 46).attr('text-anchor', 'middle').text('Horário de acordar');
   g.append('text').attr('class', 'axis-label').attr('transform', 'rotate(-90)').attr('x', -innerHeight / 2).attr('y', -53).attr('text-anchor', 'middle').text('Duração do sono');
+  
   g.selectAll('.cell').data(data).join('rect').attr('class', 'cell').attr('x', d => x(d.wake_bin)).attr('y', d => y(d.sleep_bin)).attr('width', x.bandwidth()).attr('height', y.bandwidth()).attr('rx', 2).attr('fill', d => color(d.average))
     .on('mousemove', (event, d) => showTooltip(event, `<strong>Acorda ${d.wake_bin.toFixed(1)}h · dorme ${d.sleep_bin}–${d.sleep_bin + 1}h</strong>${metrics[state.metric].label}: ${fmt(d.average, 2)}<br>${d.n} pessoas`)).on('mouseleave', hideTooltip);
+
+  // --- LINHA DE THRESHOLD NO MAPA DE CALOR (06:30 = 6.5) ---
+  const thresholdX = x(6.5);
+  if (thresholdX !== undefined) {
+    g.append('line')
+      .attr('x1', thresholdX - (x.paddingInner() * x.step()) / 2) // Centraliza a linha entre os blocos
+      .attr('x2', thresholdX - (x.paddingInner() * x.step()) / 2)
+      .attr('y1', 0).attr('y2', innerHeight)
+      .attr('stroke', COLORS.ink)
+      .attr('stroke-width', 1.5)
+      .attr('stroke-dasharray', '5,4')
+      .attr('opacity', 0.8)
+      .attr('pointer-events', 'none'); // Evita que a linha interfira na interação dos blocos
+    }
+
   const legendWidth = Math.min(130, innerWidth * .35);
   const gradientId = 'heat-gradient';
   const gradient = svg.append('defs').append('linearGradient').attr('id', gradientId);
@@ -233,7 +271,6 @@ async function renderHeatmap() {
   legend.append('rect').attr('width', legendWidth).attr('height', 7).attr('fill', `url(#${gradientId})`);
   legend.append('text').attr('y', -3).attr('fill', COLORS.muted).attr('font-size', 9).text(`${fmt(domain[0])} → ${fmt(domain[1])}`);
 }
-
 async function renderScatter() {
   // Amostra determinística limita o custo de desenho, preservando toda a base para agregações.
   const data = rows(await connection.query(`
