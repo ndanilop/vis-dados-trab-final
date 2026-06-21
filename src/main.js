@@ -195,7 +195,7 @@ async function renderCountries() {
     .on('mouseleave', hideTooltip).on('click', async (_, d) => { state.country = state.country === d.country ? null : d.country; await renderDetails(); });
   groups.append('line').attr('x1', 0).attr('x2', d => x(d.average)).attr('y1', d => y(d.country) + y.bandwidth() / 2).attr('y2', d => y(d.country) + y.bandwidth() / 2).attr('stroke', '#b9c1ba').attr('stroke-width', 2);
   groups.append('circle').attr('cx', d => x(d.average)).attr('cy', d => y(d.country) + y.bandwidth() / 2).attr('r', 6).attr('fill', d => state.country === d.country ? COLORS.accent : COLORS.early).attr('stroke', COLORS.ink).attr('stroke-width', .7);
-  groups.append('text').attr('x', d => x(d.average) + 10).attr('y', d => y(d.country) + y.bandwidth() / 2 + 4).attr('fill', COLORS.muted).attr('font-size', 11).text(d => fmt(d.average, 1));
+  groups.append('text').attr('x', d => x(d.average) + 10).attr('y', d => y(d.country) + y.bandwidth() / 2 + 4).attr('fill', COLORS.muted).attr('font-size', 11).text(d => fmt(d.average, 2));
 }
 
 async function renderHeatmap() {
