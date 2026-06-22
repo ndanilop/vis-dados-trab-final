@@ -28,7 +28,7 @@ function rows(result) {
 function filterSql(alias = '') {
   const prefix = alias ? `${alias}.` : '';
   const clauses = [];
-  if (state.group !== 'Todos') clauses.push(`${prefix}Early_Waker = '${state.group}'`);
+  if (state.group !== 'Todos') clauses.push(`${prefix}Early_Waker = ${state.group === 'Yes' ? 'true' : 'false'}`);
   if (state.country) clauses.push(`${prefix}Country = '${state.country.replaceAll("'", "''")}'`);
   return clauses.length ? ` AND ${clauses.join(' AND ')}` : '';
 }
@@ -124,12 +124,12 @@ async function renderMetricBars() {
         (n_early + n_late - 2)) AS difference
     FROM (
       SELECT
-        AVG(CASE WHEN Early_Waker = 'Yes' THEN ${metric} END) AS avg_early,
-        AVG(CASE WHEN Early_Waker = 'No' THEN ${metric} END) AS avg_late,
-        STDDEV_SAMP(CASE WHEN Early_Waker = 'Yes' THEN ${metric} END) AS sd_early,
-        STDDEV_SAMP(CASE WHEN Early_Waker = 'No' THEN ${metric} END) AS sd_late,
-        COUNT(CASE WHEN Early_Waker = 'Yes' THEN 1 END) AS n_early,
-        COUNT(CASE WHEN Early_Waker = 'No' THEN 1 END) AS n_late
+        AVG(CASE WHEN Early_Waker = true THEN ${metric} END) AS avg_early,
+        AVG(CASE WHEN Early_Waker = false THEN ${metric} END) AS avg_late,
+        STDDEV_SAMP(CASE WHEN Early_Waker = true THEN ${metric} END) AS sd_early,
+        STDDEV_SAMP(CASE WHEN Early_Waker = false THEN ${metric} END) AS sd_late,
+        COUNT(CASE WHEN Early_Waker = true THEN 1 END) AS n_early,
+        COUNT(CASE WHEN Early_Waker = false THEN 1 END) AS n_late
       FROM health_data
     ) AS stats
   `).join(' UNION ALL ');
@@ -202,7 +202,7 @@ async function renderTrend() {
 async function renderCountries() {
   const data = rows(await connection.query(`
     SELECT Country AS country, AVG(${state.metric}) AS average, COUNT(*) AS n
-    FROM health_data WHERE ${state.metric} IS NOT NULL ${state.group !== 'Todos' ? `AND Early_Waker = '${state.group}'` : ''}
+    FROM health_data WHERE ${state.metric} IS NOT NULL ${state.group !== 'Todos' ? `AND Early_Waker = ${state.group === 'Yes' ? 'true' : 'false'}` : ''}
     GROUP BY 1 HAVING COUNT(*) >= 20 ORDER BY average DESC
   `));
   const margin = { top: 10, right: 58, bottom: 52, left: 92 };
@@ -307,7 +307,7 @@ async function renderScatter() {
     .attr('fill', COLORS.muted).attr('font-size', 11).attr('font-weight', 700)
     .text(`Correlação r = ${d3.format('+.2f')(correlation)}`);
 
-  g.selectAll('.point').data(data).join('circle').attr('class', 'point').attr('cx', d => x(d.sleep_quality)).attr('cy', d => y(d.value)).attr('r', 3.3).attr('fill', d => d.early_waker === 'Yes' ? COLORS.early : COLORS.late).attr('fill-opacity', .38).attr('stroke', '#fff').attr('stroke-width', .3)
+  g.selectAll('.point').data(data).join('circle').attr('class', 'point').attr('cx', d => x(d.sleep_quality)).attr('cy', d => y(d.value)).attr('r', 3.3).attr('fill', d => d.early_waker === true ? COLORS.early : COLORS.late).attr('fill-opacity', .38).attr('stroke', '#fff').attr('stroke-width', .3)
     .on('mouseenter', function (event, d) { d3.select(this).attr('r', 6).attr('fill-opacity', 1); showTooltip(event, `<strong>${d.id} · ${d.age} anos</strong>${d.gender}, ${d.occupation}<br>${d.country}<br>Acorda: ${fmt(d.wake_hour, 1)}h · Sono: ${fmt(d.sleep_duration, 1)}h<br>Qualidade: ${fmt(d.sleep_quality)} · ${metrics[state.metric].label}: ${fmt(d.value)}`); })
     .on('mousemove', (event, d) => showTooltip(event, `<strong>${d.id} · ${d.age} anos</strong>${d.gender}, ${d.occupation}<br>${d.country}<br>Acorda: ${fmt(d.wake_hour, 1)}h · Sono: ${fmt(d.sleep_duration, 1)}h<br>Qualidade: ${fmt(d.sleep_quality)} · ${metrics[state.metric].label}: ${fmt(d.value)}`))
     .on('mouseleave', function () { d3.select(this).attr('r', 3.3).attr('fill-opacity', .38); hideTooltip(); });
