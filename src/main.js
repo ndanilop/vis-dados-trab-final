@@ -60,7 +60,8 @@ async function initEngine() {
   const db = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger(), new Worker(bundle.mainWorker));
   await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
   connection = await db.connect();
-  const csv = await (await fetch('/early_wakeup_health_dataset.csv')).text();
+  const csvUrl = `${import.meta.env.BASE_URL}early_wakeup_health_dataset.csv`;
+  const csv = await (await fetch(csvUrl)).text();
   await db.registerFileText('dataset.csv', csv);
 
   // O DuckDB faz tipagem, derivação temporal e amostragem antes de qualquer desenho em D3.
